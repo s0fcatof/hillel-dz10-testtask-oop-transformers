@@ -36,7 +36,7 @@ class TransformersTest extends TestCase
         $this->factory->addType($this->transformer2);
 
         $this->assertEqualsCanonicalizing(
-            [$this->transformer2, $this->transformer2],
+            [$this->transformer1, $this->transformer2],
             (new ReflectionClass(Transformers\TransformerFactory::class))
                 ->getProperty('types')
                 ->getValue($this->factory)
