@@ -11,28 +11,32 @@ class TransformersTest extends TestCase
 {
     protected Transformers\TransformerFactory $factory;
     protected Transformers\MergeTransformer $mergeTransformer;
+    protected Transformers\Transformer1 $transformer1;
+    protected Transformers\Transformer2 $transformer2;
 
     public function setUp(): void
     {
         $this->factory = new Transformers\TransformerFactory();
         $this->mergeTransformer = new Transformers\MergeTransformer();
+        $this->transformer1 = new Transformers\Transformer1();
+        $this->transformer2 = new Transformers\Transformer2();
     }
 
     public function testAddType()
     {
-        $this->factory->addType(new Transformers\Transformer1());
+        $this->factory->addType($this->transformer1);
 
         $this->assertEqualsCanonicalizing(
-            [new Transformers\Transformer1()],
+            [$this->transformer1],
             (new ReflectionClass(Transformers\TransformerFactory::class))
                 ->getProperty('types')
                 ->getValue($this->factory)
         );
 
-        $this->factory->addType(new Transformers\Transformer2());
+        $this->factory->addType($this->transformer2);
 
         $this->assertEqualsCanonicalizing(
-            [new Transformers\Transformer1(), new Transformers\Transformer2()],
+            [$this->transformer2, $this->transformer2],
             (new ReflectionClass(Transformers\TransformerFactory::class))
                 ->getProperty('types')
                 ->getValue($this->factory)
@@ -41,11 +45,11 @@ class TransformersTest extends TestCase
 
     public function testCreate()
     {
-        $this->factory->addType(new Transformers\Transformer1());
-        $this->factory->addType(new Transformers\Transformer2());
+        $this->factory->addType($this->transformer1);
+        $this->factory->addType($this->transformer2);
 
-        $this->assertEqualsCanonicalizing(
-            [new Transformers\Transformer1(), new Transformers\Transformer1()],
+        $this->assertContainsOnlyInstancesOf(
+            get_class($this->transformer1),
             $this->factory->createTransformer1(2)
         );
 
@@ -54,11 +58,8 @@ class TransformersTest extends TestCase
             count($this->factory->createTransformer1(2))
         );
 
-        $this->assertEqualsCanonicalizing(
-            [
-                new Transformers\Transformer2(), new Transformers\Transformer2(), new Transformers\Transformer2(),
-                new Transformers\Transformer2(), new Transformers\Transformer2()
-            ],
+        $this->assertContainsOnlyInstancesOf(
+            get_class($this->transformer2),
             $this->factory->createTransformer2(5)
         );
 
@@ -73,11 +74,11 @@ class TransformersTest extends TestCase
 
     public function testAddTransformer()
     {
-        $this->factory->addType(new Transformers\Transformer2());
-        $this->mergeTransformer->addTransformer(new Transformers\Transformer2());
+        $this->factory->addType($this->transformer2);
+        $this->mergeTransformer->addTransformer($this->transformer2);
 
         $this->assertEqualsCanonicalizing(
-            [new Transformers\Transformer2()],
+            [$this->transformer2],
             (new ReflectionClass(Transformers\MergeTransformer::class))
                 ->getProperty('mergedWith')
                 ->getValue($this->mergeTransformer)
@@ -86,7 +87,7 @@ class TransformersTest extends TestCase
         $this->mergeTransformer->addTransformer($this->factory->createTransformer2(2));
 
         $this->assertEqualsCanonicalizing(
-            [new Transformers\Transformer2(), new Transformers\Transformer2(), new Transformers\Transformer2()],
+            [$this->transformer2, $this->transformer2, $this->transformer2],
             (new ReflectionClass(Transformers\MergeTransformer::class))
                 ->getProperty('mergedWith')
                 ->getValue($this->mergeTransformer)
@@ -95,7 +96,7 @@ class TransformersTest extends TestCase
         $this->factory->addType($this->mergeTransformer);
 
         $this->assertEqualsCanonicalizing(
-            [new Transformers\Transformer2(), $this->mergeTransformer],
+            [$this->transformer2, $this->mergeTransformer],
             (new ReflectionClass(Transformers\TransformerFactory::class))
                 ->getProperty('types')
                 ->getValue($this->factory)
@@ -104,8 +105,8 @@ class TransformersTest extends TestCase
 
     public function testGetters()
     {
-        $this->factory->addType(new Transformers\Transformer2());
-        $this->mergeTransformer->addTransformer(new Transformers\Transformer2());
+        $this->factory->addType($this->transformer2);
+        $this->mergeTransformer->addTransformer($this->transformer2);
         $this->mergeTransformer->addTransformer($this->factory->createTransformer2(2));
         $this->factory->addType($this->mergeTransformer);
         $transformer = current($this->factory->createMergeTransformer(1));
